@@ -1,0 +1,77 @@
+machine:
+    kubelet:
+        extraArgs:
+          rotate-server-certificates: true
+          max-pods: 80
+        extraMounts:
+          - destination: /var/lib/longhorn
+            type: bind
+            source: /var/lib/longhorn
+            options:
+              - bind
+              - rshared
+              - rw
+          - destination: /opt/local
+            type: bind
+            source: /opt/local
+            options:
+              - bind
+              - rshared
+              - rw
+    install:
+      disk: /dev/${disk}
+    extensions:
+      - image: ghcr.io/siderolabs/nonfree-kmod-nvidia:535.129.03-v1.7.1
+      - image: ghcr.io/siderolabs/nvidia-container-toolkit:535.129.03-v1.14.6
+  kernel:
+    modules:
+      - name: nvidia
+      - name: nvidia_uvm
+      - name: nvidia_drm
+      - name: nvidia_modeset
+  sysctls:
+    net.core.bpf_jit_harden: 1
+    nodeLabels:
+      node: gpu
+    files:
+      - content: |
+          [metrics]
+            address = "0.0.0.0:11234"
+        path: /var/cri/conf.d/metrics.toml
+        op: create
+
+    # Provides machine specific network configuration options.
+    network:
+      hostname: ${hostname}
+      interfaces:
+        - interface: eth0 # The interface name.
+          addresses:
+            - ${netid}.${ip}/24
+          routes:
+            - network: 0.0.0.0/0 # The route's network (destination).
+              gateway: ${netid}.${gateway} # The route's gateway (if empty, creates link scope route).
+      nameservers:
+       - 8.8.8.8
+       - 168.95.1.1
+    registries:
+      mirrors:
+        "${netid}.${ip}:5000":
+           endpoints:
+             - http://${netid}.${ip}:5000
+      config:
+        "${netid}.${ip}:5000":
+            tls:
+               insecureSkipVerify: true
+cluster:
+    network:
+        dnsDomain: ${k8sName}.org # The domain used by Kubernetes DNS.
+        # The pod subnet CIDR.
+        podSubnets:
+            - 10.244.0.0/16
+        # The service subnet CIDR.
+        serviceSubnets:
+            - 10.98.0.0/24
+    proxy:
+        mode: ipvs
+        extraArgs:
+          ipvs-strict-arp: true

@@ -1,0 +1,94 @@
+machine:
+  kubelet:
+        extraArgs:
+          rotate-server-certificates: true
+          max-pods: 80
+        extraMounts:
+          - destination: /var/lib/longhorn
+            type: bind
+            source: /var/lib/longhorn
+            options:
+              - bind
+              - rshared
+              - rw
+          - destination: /opt/local
+            type: bind
+            source: /opt/local
+            options:
+              - bind
+              - rshared
+              - rw
+  install:
+    disk: /dev/${disk}
+    extensions:
+      - image: ghcr.io/siderolabs/nonfree-kmod-nvidia:535.129.03-v1.7.1
+      - image: ghcr.io/siderolabs/nvidia-container-toolkit:535.129.03-v1.14.6
+  kernel:
+    modules:
+      - name: nvidia
+      - name: nvidia_uvm
+      - name: nvidia_drm
+      - name: nvidia_modeset
+  sysctls:
+    net.core.bpf_jit_harden: 1
+  nodeLabels:
+    wk: kadm
+    node: gpu
+  files:
+      - content: |
+          [metrics]
+            address = "0.0.0.0:11234"
+        path: /var/cri/conf.d/metrics.toml
+        op: create
+  network:
+    hostname: ${hostname}
+    interfaces:
+      - interface: eth0
+        addresses:
+          - ${netid}.${ip}/24
+        routes:
+          - network: 0.0.0.0/0
+            gateway: ${netid}.${gateway}
+    nameservers:
+     - 8.8.8.8
+     - 168.95.1.1
+
+  registries:
+    mirrors:
+      "${netid}.${ip}:5000":
+         endpoints:
+           - http://${netid}.${ip}:5000
+    config:
+      "${netid}.${ip}:5000":
+          tls:
+             insecureSkipVerify: true
+
+cluster:
+    clusterName: ${k8sName}
+    network:
+        dnsDomain: ${k8sName}.org
+        podSubnets:
+            - 10.244.0.0/16
+        serviceSubnets:
+            - 10.98.0.0/24
+        cni:
+          name: custom
+          urls:
+          - https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/canal.yaml
+    proxy:
+      mode: ipvs
+      extraArgs:
+          ipvs-strict-arp: true
+    extraManifests:
+      - https://raw.githubusercontent.com/metallb/metallb/v0.14.3/config/manifests/metallb-native.yaml
+      - https://dl.ccnl.cloud/script/bin/k8s-mlb-config.yaml
+      - https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/main/deploy/standalone-install.yaml
+      - https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+#      - https://raw.githubusercontent.com/LLM-K8s
+    inlineManifests:
+      - name: namespace-longhorn-system
+        contents: |-
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+             name: longhorn-system
