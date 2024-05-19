@@ -4,13 +4,6 @@ machine:
           rotate-server-certificates: true
           max-pods: 80
         extraMounts:
-          - destination: /var/lib/longhorn
-            type: bind
-            source: /var/lib/longhorn
-            options:
-              - bind
-              - rshared
-              - rw
           - destination: /opt/local
             type: bind
             source: /opt/local
@@ -20,17 +13,6 @@ machine:
               - rw
     install:
       disk: /dev/${disk}
-    extensions:
-      - image: ghcr.io/siderolabs/nonfree-kmod-nvidia:535.129.03-v1.7.1
-      - image: ghcr.io/siderolabs/nvidia-container-toolkit:535.129.03-v1.14.6
-  kernel:
-    modules:
-      - name: nvidia
-      - name: nvidia_uvm
-      - name: nvidia_drm
-      - name: nvidia_modeset
-  sysctls:
-    net.core.bpf_jit_harden: 1
     nodeLabels:
       node: gpu
     files:
@@ -55,11 +37,11 @@ machine:
        - 168.95.1.1
     registries:
       mirrors:
-        "${netid}.${ip}:5000":
+        "${netid}.${registerIp}:5000":
            endpoints:
-             - http://${netid}.${ip}:5000
+             - http://${netid}.${registerIp}:5000
       config:
-        "${netid}.${ip}:5000":
+        "${netid}.${registerIp}:5000":
             tls:
                insecureSkipVerify: true
 cluster:

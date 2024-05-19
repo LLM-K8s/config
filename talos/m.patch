@@ -4,13 +4,6 @@ machine:
           rotate-server-certificates: true
           max-pods: 80
         extraMounts:
-          - destination: /var/lib/longhorn
-            type: bind
-            source: /var/lib/longhorn
-            options:
-              - bind
-              - rshared
-              - rw
           - destination: /opt/local
             type: bind
             source: /opt/local
@@ -20,20 +13,8 @@ machine:
               - rw
   install:
     disk: /dev/${disk}
-    extensions:
-      - image: ghcr.io/siderolabs/nonfree-kmod-nvidia:535.129.03-v1.7.1
-      - image: ghcr.io/siderolabs/nvidia-container-toolkit:535.129.03-v1.14.6
-  kernel:
-    modules:
-      - name: nvidia
-      - name: nvidia_uvm
-      - name: nvidia_drm
-      - name: nvidia_modeset
-  sysctls:
-    net.core.bpf_jit_harden: 1
   nodeLabels:
     wk: kadm
-    node: gpu
   files:
       - content: |
           [metrics]
@@ -55,11 +36,11 @@ machine:
 
   registries:
     mirrors:
-      "${netid}.${ip}:5000":
+      "${netid}.${registerIp}:5000":
          endpoints:
-           - http://${netid}.${ip}:5000
+           - http://${netid}.${registerIp}:5000
     config:
-      "${netid}.${ip}:5000":
+      "${netid}.${registerIp}:5000":
           tls:
              insecureSkipVerify: true
 
@@ -74,7 +55,7 @@ cluster:
         cni:
           name: custom
           urls:
-          - https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/canal.yaml
+          - https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/canal.yaml
     proxy:
       mode: ipvs
       extraArgs:
@@ -85,10 +66,3 @@ cluster:
       - https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/main/deploy/standalone-install.yaml
       - https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
 #      - https://raw.githubusercontent.com/LLM-K8s
-    inlineManifests:
-      - name: namespace-longhorn-system
-        contents: |-
-          apiVersion: v1
-          kind: Namespace
-          metadata:
-             name: longhorn-system
