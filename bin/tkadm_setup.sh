@@ -20,9 +20,9 @@ for i in "${!hostnames[@]}"; do
     export hostname
 
     if [ "${type}" = "m" ]; then
-        envsubst < "talos/m.patch" > "patches/${hostname}.patch"
+        envsubst < "../talos/m.patch" > "patches/${hostname}.patch"
     elif [ "${type}" = "w" ]; then
-        envsubst < "talos/w.patch" > "patches/${hostname}.patch"
+        envsubst < "../talos/w.patch" > "patches/${hostname}.patch"
     fi
 done
 echo "patch ok"
