@@ -65,4 +65,4 @@ cluster:
       - https://dl.ccnl.cloud/script/bin/k8s-mlb-config.yaml
       - https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/main/deploy/standalone-install.yaml
       - https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
-#      - https://raw.githubusercontent.com/LLM-K8s
+      - https://raw.githubusercontent.com/LLM-K8s/config/refs/heads/main/lb/IPAddressPool.yaml
